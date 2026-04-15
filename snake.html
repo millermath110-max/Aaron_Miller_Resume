@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slither Duel — Two-Player Snake</title>
+  <style>
+    /* ============================================================
+       Slither Duel — all styles in one file
+    ============================================================ */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a1a;
+      color: #eee;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      background: linear-gradient(90deg, #00e5ff, #ff4081);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 14px;
+      letter-spacing: 1px;
+    }
+
+    /* ---- Score bar ---- */
+    .scoreboard {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 12px;
+      font-size: 1rem;
+    }
+
+    .score-p1 { color: #00e5ff; font-weight: bold; }
+    .score-p2 { color: #ff4081; font-weight: bold; }
+
+    /* ---- Canvas ---- */
+    #gameCanvas {
+      border: 2px solid #333;
+      border-radius: 6px;
+      display: block;
+      background: #0d0d22;
+      image-rendering: pixelated;
+    }
+
+    /* ---- Controls legend ---- */
+    .controls {
+      display: flex;
+      gap: 40px;
+      margin-top: 14px;
+      font-size: 0.8rem;
+      color: #666;
+    }
+
+    .controls .p1 { color: #00e5ff; }
+    .controls .p2 { color: #ff4081; }
+
+    kbd {
+      background: #1e1e3a;
+      border: 1px solid #444;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 0.78rem;
+    }
+
+    /* ---- Overlay (start / game over) ---- */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    #overlay h2 {
+      font-size: 2.4rem;
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+    }
+
+    #overlay p {
+      color: #aaa;
+      margin-bottom: 28px;
+      font-size: 0.95rem;
+      text-align: center;
+      max-width: 340px;
+      line-height: 1.6;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #00e5ff, #0080a0);
+      color: #000;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 1px;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 32px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+
+    .winner-p1 { color: #00e5ff; }
+    .winner-p2 { color: #ff4081; }
+    .winner-tie { color: #ffd700; }
+
+    .back-link {
+      margin-top: 18px;
+      font-size: 0.82rem;
+      color: #555;
+    }
+
+    .back-link a { color: #888; }
+    .back-link a:hover { color: #ccc; }
+
+    /* ---- Countdown ---- */
+    #countdown {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 5rem;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #ffffff;
+      text-shadow: 0 0 30px #00e5ff, 0 0 60px #00e5ff;
+      z-index: 9;
+      pointer-events: none;
+      animation: countPop 0.35s ease-out;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    @keyframes countPop {
+      from { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+      to   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+    }
+
+    /* ---- Pause banner ---- */
+    #pauseBanner {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.85);
+      color: #ffd700;
+      font-size: 1.6rem;
+      letter-spacing: 3px;
+      padding: 14px 36px;
+      border-radius: 8px;
+      z-index: 9;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Slither Duel</h1>
+  <p class="subtitle">Two-player snake — collect fireballs, outlast your opponent</p>
+
+  <div class="scoreboard">
+    <span class="score-p1">P1 (WASD): <span id="score1">0</span> 🔥</span>
+    <span class="score-p2">P2 (Arrows): <span id="score2">0</span> 🔥</span>
+  </div>
+
+  <canvas id="gameCanvas" width="600" height="600"></canvas>
+
+  <div class="controls">
+    <span class="p1">Player 1: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
+    <span style="color:#555">|&nbsp; <kbd>Esc</kbd> Pause</span>
+    <span class="p2">Player 2: <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span>
+  </div>
+
+  <div id="countdown">3</div>
+  <div id="pauseBanner">PAUSED</div>
+
+  <!-- Controls screen (shown after clicking Start, before countdown) -->
+  <div id="controlsScreen" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); flex-direction:column; align-items:center; justify-content:center; z-index:10;">
+    <h2 style="font-size:1.8rem; letter-spacing:3px; margin-bottom:6px; color:#ffd700;">HOW TO PLAY</h2>
+    <p style="color:#666; font-size:0.8rem; margin-bottom:28px; letter-spacing:1px;">GET READY — CONTROLS BELOW</p>
+
+    <div style="display:flex; gap:48px; margin-bottom:28px; flex-wrap:wrap; justify-content:center;">
+      <div style="text-align:center;">
+        <div style="color:#00e5ff; font-weight:700; font-size:1rem; margin-bottom:12px; letter-spacing:1px;">PLAYER 1</div>
+        <div style="display:grid; grid-template-columns:repeat(3,40px); grid-template-rows:repeat(2,40px); gap:4px;">
+          <div></div>
+          <div style="background:#1e1e3a; border:1px solid #00e5ff; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#00e5ff; font-weight:bold;">W</div>
+          <div></div>
+          <div style="background:#1e1e3a; border:1px solid #00e5ff; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#00e5ff; font-weight:bold;">A</div>
+          <div style="background:#1e1e3a; border:1px solid #00e5ff; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#00e5ff; font-weight:bold;">S</div>
+          <div style="background:#1e1e3a; border:1px solid #00e5ff; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#00e5ff; font-weight:bold;">D</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;">
+        <div style="color:#ff4081; font-weight:700; font-size:1rem; margin-bottom:12px; letter-spacing:1px;">PLAYER 2</div>
+        <div style="display:grid; grid-template-columns:repeat(3,40px); grid-template-rows:repeat(2,40px); gap:4px;">
+          <div></div>
+          <div style="background:#1e1e3a; border:1px solid #ff4081; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#ff4081; font-weight:bold;">↑</div>
+          <div></div>
+          <div style="background:#1e1e3a; border:1px solid #ff4081; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#ff4081; font-weight:bold;">←</div>
+          <div style="background:#1e1e3a; border:1px solid #ff4081; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#ff4081; font-weight:bold;">↓</div>
+          <div style="background:#1e1e3a; border:1px solid #ff4081; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#ff4081; font-weight:bold;">→</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:32px; font-size:0.88rem; color:#888; text-align:center;">
+      <span>🔥 Eat fireballs to grow longer</span>
+      <span>🏆 <strong style="color:#ffd700;">Goal:</strong> Stay alive as long as possible.</span>
+      <span>💣 <span style="color:#ff6060;">Avoid bombs — instant death!</span></span>
+      <span>⏸ Press <kbd style="background:#1e1e3a; border:1px solid #444; border-radius:3px; padding:1px 5px; font-size:0.8rem;">Esc</kbd> to pause</span>
+    </div>
+
+    <div style="color:#ffffff; font-size:1.1rem; letter-spacing:2px; animation: blink 1.2s step-start infinite;">Press SPACE BAR when ready</div>
+  </div>
+
+  <!-- Start / Game-over overlay -->
+  <div id="overlay">
+    <h2 id="overlayTitle" class="winner-p1">SLITHER DUEL</h2>
+    <p id="overlayMsg">
+      Eat 🔥 fireballs to grow longer.<br>
+      Force your opponent to crash into <em>your</em> body to win.<br>
+      Hitting yourself or your opponent = instant loss.<br>
+      💣 Bombs are instant death — don't touch them!
+    </p>
+    <button class="btn" id="startBtn">START GAME</button>
+    <div class="back-link"><a href="resume.html">&larr; Back to Resume</a></div>
+  </div>
+
+  <script>
+    // ============================================================
+    //  Slither Duel — all game logic in one file
+    // ============================================================
+
+    const COLS       = 30;
+    const ROWS       = 30;
+    const CELL       = 20;          // px per cell
+    const TICK_MS    = 120;         // ms per frame (lower = faster)
+    const FIREBALL_COUNT = 5;       // fireballs on board at once
+    const BOMB_COUNT     = 3;       // bombs on board (permanent)
+
+    const canvas  = document.getElementById('gameCanvas');
+    const ctx     = canvas.getContext('2d');
+    canvas.width  = COLS * CELL;
+    canvas.height = ROWS * CELL;
+
+    const score1El  = document.getElementById('score1');
+    const score2El  = document.getElementById('score2');
+    const overlay   = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlayTitle');
+    const overlayMsg   = document.getElementById('overlayMsg');
+    const startBtn  = document.getElementById('startBtn');
+    const pauseBanner = document.getElementById('pauseBanner');
+
+    // ---- State ----
+    let snake1, snake2, dir1, dir2, nextDir1, nextDir2;
+    let fireballs = [];
+    let bombs = [];
+    let explosions = [];
+    let deadPlayer1 = false, deadPlayer2 = false;
+    let score1, score2;
+    let gameLoop, bombLoop, running, paused;
+
+    // ---- Init ----
+    function initGame() {
+      snake1    = [{x:7, y:15}, {x:6, y:15}, {x:5, y:15}];
+      snake2    = [{x:22, y:15}, {x:23, y:15}, {x:24, y:15}];
+      dir1      = {x:1, y:0};
+      dir2      = {x:-1, y:0};
+      nextDir1  = {...dir1};
+      nextDir2  = {...dir2};
+      score1      = 0;
+      score2      = 0;
+      deadPlayer1 = false;
+      deadPlayer2 = false;
+      explosions  = [];
+      fireballs = [];
+      bombs = [];
+      score1El.textContent = 0;
+      score2El.textContent = 0;
+
+      for (let i = 0; i < FIREBALL_COUNT; i++) spawnFireball();
+      for (let i = 0; i < BOMB_COUNT; i++) {
+        let c, tries = 0;
+        do { c = randomCell(); tries++; } while (cellOccupied(c) && tries < 200);
+        bombs.push(c);
+      }
+    }
+
+    // ---- Fireball ----
+    function randomCell() {
+      return { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+    }
+
+    function cellOccupied(c) {
+      return snake1.some(s => s.x===c.x && s.y===c.y)
+          || snake2.some(s => s.x===c.x && s.y===c.y)
+          || fireballs.some(f => f.x===c.x && f.y===c.y)
+          || bombs.some(b => b.x===c.x && b.y===c.y);
+    }
+
+    function spawnFireball() {
+      let c;
+      let tries = 0;
+      do { c = randomCell(); tries++; } while (cellOccupied(c) && tries < 200);
+      fireballs.push(c);
+    }
+
+    // ---- Explosion system ----
+    function createExplosion(gx, gy) {
+      const cx = gx * CELL + CELL / 2;
+      const cy = gy * CELL + CELL / 2;
+      const fireColors = ['#ffffff','#fff7a0','#ffd700','#ff8c00','#ff4500','#ff0000','#ff6b35','#ffcc00'];
+      const particles = [];
+
+      // Main burst — 80 particles in all directions
+      for (let i = 0; i < 80; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 0.5 + Math.random() * 6;
+        const big   = Math.random() < 0.15;
+        particles.push({
+          x: cx, y: cy,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - (Math.random() * 2), // bias upward
+          color: fireColors[Math.floor(Math.random() * fireColors.length)],
+          alpha: 1,
+          size: big ? 5 + Math.random() * 7 : 1.5 + Math.random() * 3.5,
+          decay: big ? 0.012 : 0.018 + Math.random() * 0.018,
+          gravity: 0.06 + Math.random() * 0.08
+        });
+      }
+
+      // Shockwave rings
+      const shockwaves = [
+        { r: 0, maxR: CELL * 4.5, alpha: 0.9, speed: 4.5 },
+        { r: 0, maxR: CELL * 3,   alpha: 0.6, speed: 3.0 }
+      ];
+
+      // Central flash
+      explosions.push({ cx, cy, particles, shockwaves, flash: 1.0 });
+    }
+
+    function updateExplosions() {
+      for (const exp of explosions) {
+        exp.flash = Math.max(0, exp.flash - 0.08);
+        for (const p of exp.particles) {
+          p.x  += p.vx;
+          p.y  += p.vy;
+          p.vy += p.gravity;
+          p.vx *= 0.97;
+          p.alpha -= p.decay;
+          p.size  *= 0.975;
+        }
+        exp.particles = exp.particles.filter(p => p.alpha > 0.02);
+        for (const sw of exp.shockwaves) {
+          sw.r     += sw.speed;
+          sw.alpha -= 0.035;
+        }
+        exp.shockwaves = exp.shockwaves.filter(sw => sw.alpha > 0);
+      }
+      explosions = explosions.filter(e => e.particles.length > 0 || e.shockwaves.length > 0 || e.flash > 0);
+    }
+
+    function drawExplosions() {
+      for (const exp of explosions) {
+        // Central flash
+        if (exp.flash > 0) {
+          const grad = ctx.createRadialGradient(exp.cx, exp.cy, 0, exp.cx, exp.cy, CELL * 2);
+          grad.addColorStop(0, `rgba(255,255,220,${exp.flash})`);
+          grad.addColorStop(1, `rgba(255,100,0,0)`);
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(exp.cx, exp.cy, CELL * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Shockwave rings
+        for (const sw of exp.shockwaves) {
+          ctx.beginPath();
+          ctx.arc(exp.cx, exp.cy, sw.r, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(255,180,50,${sw.alpha})`;
+          ctx.lineWidth = 3;
+          ctx.shadowColor = '#ff8c00';
+          ctx.shadowBlur  = 12;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+        }
+
+        // Particles
+        for (const p of exp.particles) {
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+          ctx.shadowColor = p.color;
+          ctx.shadowBlur  = 6;
+          ctx.fillStyle   = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+
+    // ---- Explode snake body into colored particles ----
+    function explodeSnake(snake, color) {
+      const particles = [];
+      snake.forEach((seg, idx) => {
+        const cx = seg.x * CELL + CELL / 2;
+        const cy = seg.y * CELL + CELL / 2;
+        const count = idx === 0 ? 14 : 4;
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 0.4 + Math.random() * (idx === 0 ? 4 : 2.5);
+          particles.push({
+            x: cx, y: cy,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - Math.random() * 1.5,
+            color,
+            alpha: 1,
+            size: 1.5 + Math.random() * (idx === 0 ? 4 : 2.5),
+            decay: 0.016 + Math.random() * 0.018,
+            gravity: 0.05 + Math.random() * 0.05
+          });
+        }
+      });
+      explosions.push({ cx: snake[0].x * CELL + CELL/2, cy: snake[0].y * CELL + CELL/2, particles, shockwaves: [], flash: 0 });
+    }
+
+    // ---- Bounce snake off walls (modifies dir in-place) ----
+    function bounceWall(snake, dir) {
+      const nx = snake[0].x + dir.x;
+      const ny = snake[0].y + dir.y;
+      if (nx < 0 || nx >= COLS) dir.x = -dir.x;
+      if (ny < 0 || ny >= ROWS) dir.y = -dir.y;
+    }
+
+    // ---- Move one snake; returns false if it died (self-collision only) ----
+    function moveSnake(snake, dir) {
+      const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+      // Self collision (skip last segment — it's about to move)
+      for (let i = 0; i < snake.length - 1; i++) {
+        if (snake[i].x === head.x && snake[i].y === head.y) return false;
+      }
+
+      snake.unshift(head);
+
+      // Fireball eaten?
+      const fbIdx = fireballs.findIndex(f => f.x===head.x && f.y===head.y);
+      if (fbIdx !== -1) {
+        fireballs.splice(fbIdx, 1);
+        spawnFireball();
+        return 'ate';          // keep tail (grow)
+      }
+
+      snake.pop();             // normal move
+      return true;
+    }
+
+    // ---- Check if snake A's head hits snake B's body ----
+    function hitsOther(snakeA, snakeB) {
+      const head = snakeA[0];
+      return snakeB.some(s => s.x===head.x && s.y===head.y);
+    }
+
+    // ---- Game tick ----
+    function tick() {
+      if (paused) return;
+
+      // Commit queued directions (prevent 180° reversal)
+      if (!(nextDir1.x === -dir1.x && nextDir1.y === -dir1.y)) dir1 = {...nextDir1};
+      if (!(nextDir2.x === -dir2.x && nextDir2.y === -dir2.y)) dir2 = {...nextDir2};
+
+      // Bounce off walls before moving (modifies dir in-place)
+      bounceWall(snake1, dir1);
+      bounceWall(snake2, dir2);
+      // Keep queued dirs in sync so the anti-reversal check stays correct
+      nextDir1 = {...dir1};
+      nextDir2 = {...dir2};
+
+      const res1 = moveSnake(snake1, dir1);
+      const res2 = moveSnake(snake2, dir2);
+
+      // Update scores
+      if (res1 === 'ate') { score1++; score1El.textContent = score1; }
+      if (res2 === 'ate') { score2++; score2El.textContent = score2; }
+
+      // Check cross-collision (heads hit opponent body)
+      const p1HitsP2 = hitsOther(snake1, snake2);
+      const p2HitsP1 = hitsOther(snake2, snake1);
+
+      // Also check head-to-head collision
+      const headCollide = snake1[0].x===snake2[0].x && snake1[0].y===snake2[0].y;
+
+      // Check bomb collisions
+      const p1HitsBomb = bombs.some(b => b.x===snake1[0].x && b.y===snake1[0].y);
+      const p2HitsBomb = bombs.some(b => b.x===snake2[0].x && b.y===snake2[0].y);
+
+      const p1Dead = !res1 || p1HitsP2 || headCollide || p1HitsBomb;
+      const p2Dead = !res2 || p2HitsP1 || headCollide || p2HitsBomb;
+
+      draw();
+
+      if (p1Dead || p2Dead) {
+        stopGame();
+
+        let title, msg, cls;
+        if (p1Dead && p2Dead) {
+          title = "DRAW!";  cls = "winner-tie";
+          msg = "Both players crashed at the same time.";
+        } else if (p1Dead) {
+          title = "PLAYER 2 WINS!";  cls = "winner-p2";
+          msg = `Player 1 crashed.\nFinal score — P1: ${score1} 🔥 &nbsp;|&nbsp; P2: ${score2} 🔥`;
+        } else {
+          title = "PLAYER 1 WINS!";  cls = "winner-p1";
+          msg = `Player 2 crashed.\nFinal score — P1: ${score1} 🔥 &nbsp;|&nbsp; P2: ${score2} 🔥`;
+        }
+
+        // Trigger explosions at dead snake heads + scatter body
+        if (p1Dead) { deadPlayer1 = true; createExplosion(snake1[0].x, snake1[0].y); explodeSnake(snake1, '#00e5ff'); }
+        if (p2Dead) { deadPlayer2 = true; createExplosion(snake2[0].x, snake2[0].y); explodeSnake(snake2, '#ff4081'); }
+
+        // Animate explosions, then show overlay after min 2.5s
+        let overlayShown = false;
+        function showOverlay() {
+          if (overlayShown) return;
+          overlayShown = true;
+          overlayTitle.textContent = title;
+          overlayTitle.className = cls;
+          overlayMsg.innerHTML = msg;
+          startBtn.textContent = "PLAY AGAIN";
+          overlay.style.display = 'flex';
+        }
+
+        const minDelay = setTimeout(showOverlay, 2500);
+
+        function animateExplosion() {
+          draw();
+          updateExplosions();
+          drawExplosions();
+          if (explosions.length > 0) {
+            requestAnimationFrame(animateExplosion);
+          } else {
+            clearTimeout(minDelay);
+            setTimeout(showOverlay, 400); // brief pause after particles fade
+          }
+        }
+        requestAnimationFrame(animateExplosion);
+      }
+    }
+
+    // ---- Drawing ----
+    function drawCell(x, y, color, glow) {
+      if (glow) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur  = 10;
+      }
+      ctx.fillStyle = color;
+      ctx.fillRect(x * CELL + 1, y * CELL + 1, CELL - 2, CELL - 2);
+      ctx.shadowBlur = 0;
+    }
+
+    function drawRoundHead(x, y, color) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur  = 18;
+      ctx.fillStyle   = color;
+      ctx.beginPath();
+      ctx.roundRect(x * CELL + 1, y * CELL + 1, CELL - 2, CELL - 2, 5);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    function draw() {
+      // Background grid
+      ctx.fillStyle = '#0d0d22';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Subtle grid lines
+      ctx.strokeStyle = '#14142a';
+      ctx.lineWidth = 0.5;
+      for (let c = 0; c <= COLS; c++) {
+        ctx.beginPath(); ctx.moveTo(c*CELL, 0); ctx.lineTo(c*CELL, canvas.height); ctx.stroke();
+      }
+      for (let r = 0; r <= ROWS; r++) {
+        ctx.beginPath(); ctx.moveTo(0, r*CELL); ctx.lineTo(canvas.width, r*CELL); ctx.stroke();
+      }
+
+      // Bombs
+      bombs.forEach(b => {
+        ctx.shadowColor = '#ff0000';
+        ctx.shadowBlur  = 16;
+        ctx.font = `${CELL - 2}px serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('💣', b.x * CELL + CELL / 2, b.y * CELL + CELL / 2 + 1);
+        ctx.shadowBlur = 0;
+      });
+
+      // Fireballs
+      fireballs.forEach(f => {
+        ctx.shadowColor = '#ff8c00';
+        ctx.shadowBlur  = 14;
+        ctx.font = `${CELL - 2}px serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🔥', f.x * CELL + CELL / 2, f.y * CELL + CELL / 2 + 1);
+        ctx.shadowBlur = 0;
+      });
+
+      // Snake 1 body (cyan) — hide once exploding
+      if (!deadPlayer1) {
+        for (let i = snake1.length - 1; i >= 1; i--) {
+          drawCell(snake1[i].x, snake1[i].y, `rgba(0,229,255,${1 - i / snake1.length * 0.55})`);
+        }
+        if (snake1.length) drawRoundHead(snake1[0].x, snake1[0].y, '#00e5ff');
+      }
+
+      // Snake 2 body (pink) — hide once exploding
+      if (!deadPlayer2) {
+        for (let i = snake2.length - 1; i >= 1; i--) {
+          drawCell(snake2[i].x, snake2[i].y, `rgba(255,64,129,${1 - i / snake2.length * 0.55})`);
+        }
+        if (snake2.length) drawRoundHead(snake2[0].x, snake2[0].y, '#ff4081');
+      }
+    }
+
+    // ---- Start / Stop ----
+    const countdownEl = document.getElementById('countdown');
+
+    let countdownTimer  = null;   // active setTimeout during countdown
+    let countdownResume = null;   // function to call when unpausing mid-countdown
+
+    // beginCountdown is called after the controls screen is dismissed
+    function beginCountdown() {
+      running = true;
+      paused  = false;
+      countdownResume = null;
+
+      const steps = ['3', '2', '1', 'GO!'];
+      let i = 0;
+
+      function showStep() {
+        countdownTimer  = null;
+        countdownResume = null;
+
+        countdownEl.textContent = steps[i];
+        countdownEl.style.display = 'block';
+        countdownEl.style.animation = 'none';
+        countdownEl.offsetHeight; // reflow to re-trigger animation
+        countdownEl.style.animation = '';
+
+        i++;
+        if (i < steps.length) {
+          countdownResume = showStep;
+          countdownTimer  = setTimeout(showStep, 900);
+        } else {
+          const launch = () => {
+            countdownEl.style.display = 'none';
+            gameLoop = setInterval(tick, TICK_MS);
+            bombLoop = setInterval(() => {
+              let c, tries = 0;
+              do { c = randomCell(); tries++; } while (cellOccupied(c) && tries < 200);
+              bombs.push(c);
+            }, 5000);
+          };
+          countdownResume = launch;
+          countdownTimer  = setTimeout(launch, 600);
+        }
+      }
+
+      showStep();
+    }
+
+    function stopGame() {
+      running = false;
+      clearInterval(gameLoop);
+      clearInterval(bombLoop);
+    }
+
+    // ---- Keyboard ----
+    document.addEventListener('keydown', e => {
+      // Prevent arrow keys from scrolling the page while playing
+      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) {
+        if (running) e.preventDefault();
+      }
+
+      // Player 1 — WASD
+      if (e.key === 'w' || e.key === 'W') nextDir1 = {x:0, y:-1};
+      if (e.key === 's' || e.key === 'S') nextDir1 = {x:0, y: 1};
+      if (e.key === 'a' || e.key === 'A') nextDir1 = {x:-1, y:0};
+      if (e.key === 'd' || e.key === 'D') nextDir1 = {x: 1, y:0};
+
+      // Player 2 — Arrow keys
+      if (e.key === 'ArrowUp')    nextDir2 = {x:0, y:-1};
+      if (e.key === 'ArrowDown')  nextDir2 = {x:0, y: 1};
+      if (e.key === 'ArrowLeft')  nextDir2 = {x:-1, y:0};
+      if (e.key === 'ArrowRight') nextDir2 = {x: 1, y:0};
+
+      // Pause / Unpause — Escape (also works during countdown)
+      if (e.key === 'Escape' && running) {
+        paused = !paused;
+        pauseBanner.style.display = paused ? 'block' : 'none';
+        if (paused) {
+          // Freeze: clear active countdown timer
+          if (countdownTimer !== null) {
+            clearTimeout(countdownTimer);
+            countdownTimer = null;
+          }
+        } else {
+          // Resume: restart countdown if it was mid-count, else game ticks resume naturally
+          if (countdownResume !== null) {
+            const fn = countdownResume;
+            countdownResume = null;
+            countdownTimer = setTimeout(fn, 600);
+          }
+        }
+      }
+    });
+
+    const controlsScreen = document.getElementById('controlsScreen');
+
+    // "Start Game" / "Play Again" → show controls screen
+    startBtn.addEventListener('click', () => {
+      overlay.style.display = 'none';
+      controlsScreen.style.display = 'flex';
+      // Pre-init so the board is visible behind the overlay
+      initGame();
+      draw();
+    });
+
+    // Space bar → dismiss controls screen and begin countdown
+    document.addEventListener('keydown', e => {
+      if (e.key === ' ' && controlsScreen.style.display === 'flex') {
+        e.preventDefault();
+        controlsScreen.style.display = 'none';
+        beginCountdown();
+      }
+    });
+
+    // Initial draw (before first game)
+    (function initialDraw() {
+      ctx.fillStyle = '#0d0d22';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    })();
+  </script>
+
+  <div class="back-link" style="margin-top:14px; font-size:0.8rem; color:#555;">
+    <a href="resume.html" style="color:#888;">&larr; Back to Resume</a>
+  </div>
+
+</body>
+</html>

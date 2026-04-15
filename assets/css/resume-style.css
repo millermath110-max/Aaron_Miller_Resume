@@ -1,0 +1,339 @@
+/* ============================================================
+   resume-style.css  —  Aaron Miller From-Scratch Resume Page
+   Custom stylesheet (no Bootstrap)
+   ============================================================ */
+
+/* --- Google Fonts import --- */
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700;900&family=Roboto:wght@300;400;500&display=swap');
+
+/* ===========================
+   1. GLOBAL / BODY
+=========================== */
+body {
+  font-family: 'Roboto', Arial, sans-serif;
+  font-size: 16px;
+  color: #2c2c2c;
+  background-color: #e8eef4;
+  margin: 0;
+  padding: 0;
+  line-height: 1.7;
+}
+
+a {
+  color: #1a3a5c;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #c8a200;
+  text-decoration: underline;
+}
+
+/* ===========================
+   2. PAGE WRAPPER DIV
+   (centers and constrains content)
+=========================== */
+.page-wrapper {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ===========================
+   3. SITE HEADER DIV
+=========================== */
+.site-header {
+  background-color: #1a3a5c;
+  color: #ffffff;
+  padding: 36px 24px 24px;
+  text-align: center;
+}
+
+.site-header h1 {
+  font-family: 'Raleway', sans-serif;
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+  letter-spacing: 1px;
+}
+
+.site-header .tagline {
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.05rem;
+  color: #a8c8e8;
+  font-style: italic;
+  margin: 0 0 20px 0;
+}
+
+/* ===========================
+   4. NAV LINKS
+=========================== */
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  padding: 10px 0 4px;
+}
+
+.site-nav a {
+  color: #ffd700;
+  font-family: 'Raleway', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.site-nav a:hover {
+  background: rgba(255, 255, 255, 0.15);
+  text-decoration: none;
+  color: #ffffff;
+}
+
+.site-nav .nav-external {
+  border: 1px solid #ffd700;
+  border-radius: 4px;
+  padding: 4px 10px;
+}
+
+/* ===========================
+   5. SECTION CARD DIV
+   (reusable white content block)
+=========================== */
+.section-card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 28px 32px;
+  margin: 22px 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.section-card h2 {
+  font-family: 'Raleway', sans-serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #1a3a5c;
+  border-bottom: 3px solid #1a3a5c;
+  padding-bottom: 8px;
+  margin-top: 0;
+  margin-bottom: 18px;
+}
+
+/* ===========================
+   6. ABOUT / PROFILE DIV
+=========================== */
+.about-div {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.profile-photo {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid #1a3a5c;
+  flex-shrink: 0;
+}
+
+.about-text {
+  flex: 1;
+  min-width: 200px;
+  color: #444;
+}
+
+.about-text p {
+  margin-top: 0;
+}
+
+/* ===========================
+   7. EDUCATION LISTS
+=========================== */
+.education-list {
+  margin: 0;
+  padding-left: 24px;
+  color: #2c2c2c;
+}
+
+.education-list > li {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #1a3a5c;
+  margin-bottom: 12px;
+}
+
+.education-list ul {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 0.95rem;
+  color: #444;
+  margin: 6px 0 10px 0;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.education-list ul li {
+  margin-bottom: 3px;
+}
+
+/* ===========================
+   8. EXPERIENCE / LEADERSHIP ENTRIES
+=========================== */
+.job-entry {
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e0e8f0;
+}
+
+.job-entry:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.job-entry h3 {
+  font-family: 'Raleway', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a3a5c;
+  margin: 0 0 2px 0;
+}
+
+.job-entry .job-meta {
+  font-size: 0.88rem;
+  color: #777;
+  font-style: italic;
+  margin: 0 0 6px 0;
+}
+
+.job-entry ul {
+  margin: 6px 0 0 0;
+  padding-left: 20px;
+  color: #444;
+}
+
+.job-entry ul li {
+  margin-bottom: 3px;
+}
+
+/* ===========================
+   9. SKILLS GRID
+=========================== */
+.skills-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skill-badge {
+  background-color: #1a3a5c;
+  color: #ffffff;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.88rem;
+  padding: 6px 14px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+/* ===========================
+   10. AWARDS LIST
+=========================== */
+.awards-list {
+  padding-left: 20px;
+  color: #444;
+}
+
+.awards-list li {
+  margin-bottom: 6px;
+}
+
+/* ===========================
+   11. VIDEO WRAPPER
+=========================== */
+.video-wrapper {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #000;
+}
+
+.video-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.section-note {
+  font-size: 0.9rem;
+  color: #777;
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
+/* ===========================
+   12. TABLEAU WRAPPER
+=========================== */
+.tableau-wrapper {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid #d0dce8;
+}
+
+/* ===========================
+   13. SITE FOOTER DIV
+=========================== */
+.site-footer {
+  background-color: #1a3a5c;
+  color: #a8c8e8;
+  text-align: center;
+  padding: 24px 16px;
+  margin-top: 30px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.9rem;
+}
+
+.site-footer a {
+  color: #ffd700;
+  font-weight: 600;
+}
+
+.site-footer a:hover {
+  color: #ffffff;
+}
+
+.back-to-top {
+  display: inline-block;
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+/* ===========================
+   14. RESPONSIVE ADJUSTMENTS
+=========================== */
+@media (max-width: 600px) {
+  .site-header h1 {
+    font-size: 2rem;
+  }
+
+  .about-div {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .section-card {
+    padding: 20px 16px;
+  }
+}
