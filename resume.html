@@ -251,37 +251,14 @@
         Verify it loads after hosting on GitHub Pages.
       -->
       <div class="tableau-wrapper">
-        <div class='tableauPlaceholder' id='viz1' style='position: relative; width: 100%;'>
-          <noscript>
-            <a href='https://public.tableau.com/'>
-              <img alt='Healthcare Data' src='https://public.tableau.com/static/images/Wo/WorldIndicators/GDPperCapita/1.png' style='border: none' />
-            </a>
-          </noscript>
-          <object class='tableauViz' style='display:none; width:100%; height:500px;'>
-            <param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' />
-            <param name='embed_code_version' value='3' />
-            <param name='site_root' value='' />
-            <param name='name' value='WorldIndicators/GDPperCapita' />
-            <param name='tabs' value='yes' />
-            <param name='toolbar' value='yes' />
-            <param name='static_image' value='https://public.tableau.com/static/images/Wo/WorldIndicators/GDPperCapita/1.png' />
-            <param name='animate_transition' value='yes' />
-            <param name='display_static_image' value='yes' />
-            <param name='display_spinner' value='yes' />
-            <param name='display_overlay' value='yes' />
-            <param name='display_count' value='yes' />
-            <param name='language' value='en-US' />
-          </object>
-        </div>
-        <script type='text/javascript'>
-          var divElement = document.getElementById('viz1');
-          var vizElement = divElement.getElementsByTagName('object')[0];
-          vizElement.style.width = '100%';
-          vizElement.style.height = '500px';
-          var scriptElement = document.createElement('script');
-          scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';
-          vizElement.parentNode.insertBefore(scriptElement, vizElement);
-        </script>
+        <script type="module" src="https://public.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js"></script>
+        <tableau-viz
+          src="https://public.tableau.com/views/2017HealthcareSpendingbyCountryasofGDP/Dashboard1"
+          width="100%"
+          height="500px"
+          toolbar="bottom"
+          hide-tabs>
+        </tableau-viz>
       </div>
     </section>
 
